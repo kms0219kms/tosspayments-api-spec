@@ -1,0 +1,56 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "토스페이먼츠 코어 API",
+    "description": "토스페이먼츠 API 엔드포인트(Endpoint)와 객체 정보, 파라미터, 요청 및 응답 예제를 살펴보세요.",
+    "contact": {
+      "name": "Toss Payments",
+      "email": "techsupport@tosspayments.com",
+      "url": "https://techchat.tosspayments.com"
+    },
+    "version": "1.2"
+  },
+  "servers": [
+    {
+      "url": "https://api.tosspayments.com"
+    }
+  ],
+  "tags": [
+    {
+      "name": "결제",
+      "description": "결제와 관련한 모든 API와 결제 API의 응답으로 돌아오는 Payment 객체를 살펴봅니다."
+    },
+    {
+      "name": "자동결제",
+      "description": "자동결제 API로 고객의 결제수단 정보를 인증·등록한 뒤 상점에서 원하는 시점에 자동으로 결제할 수 있습니다."
+    },
+    {
+      "name": "거래",
+      "description": "거래 조회 API로 원하는 기간 동안의 거래 기록을 조회하고 대조 확인하는 작업을 할 수 있습니다."
+    },
+    {
+      "name": "정산",
+      "description": "정산 조회 API로 원하는 기간 동안의 정산 기록을 조회하고 대조 확인하는 작업을 할 수 있습니다."
+    },
+    {
+      "name": "현금영수증",
+      "description": "현금영수증 발급 및 취소 API입니다.",
+      "externalDocs": {
+        "description": "현금영수증 발급 및 취소하기 가이드",
+        "url": "https://docs.tosspayments.com/common/apis/cash-receipt"
+      }
+    },
+    {
+      "name": "지급대행",
+      "description": "지급대행 API를 사용해 상점 하위의 서브몰 정보를 관리하고 정산된 금액을 서브몰에 지급할 수 있습니다.",
+      "externalDocs": {
+        "description": "지급대행하기 가이드",
+        "url": "https://docs.tosspayments.com/common/apis/payout-submall"
+      }
+    },
+    {
+      "name": "프로모션",
+      "description": "프로모션 정보를 조회합니다."
+    }
+  ]
+}

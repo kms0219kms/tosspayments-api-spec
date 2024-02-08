@@ -1,0 +1,37 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "토스페이먼츠 브랜드페이 API",
+    "description": "브랜드페이에서 제공하는 API 엔드포인트(Endpoint)와 객체 정보, 파라미터, 요청 및 응답 예제를 살펴보세요.",
+    "contact": {
+      "name": "Toss Payments",
+      "email": "techsupport@tosspayments.com",
+      "url": "https://techchat.tosspayments.com"
+    },
+    "version": "1.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.tosspayments.com"
+    }
+  ],
+  "tags": [
+    {
+      "name": "사용자 인증"
+    },
+    {
+      "name": "결제수단",
+      "description": "결제수단 API로 고객의 브랜드페이 결제수단 정보를 조회하거나 삭제할 수 있습니다."
+    },
+    {
+      "name": "결제"
+    },
+    {
+      "name": "회원 관리"
+    },
+    {
+      "name": "프로모션",
+      "description": "브랜드페이에서 제공하는 카드•계좌 프로모션 정보를 조회하는 API입니다."
+    }
+  ]
+}

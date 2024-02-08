@@ -1,0 +1,1391 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "토스페이먼츠 코어 API",
+    "description": "토스페이먼츠 API 엔드포인트(Endpoint)와 객체 정보, 파라미터, 요청 및 응답 예제를 살펴보세요.",
+    "contact": {
+      "name": "Toss Payments",
+      "email": "techsupport@tosspayments.com",
+      "url": "https://techchat.tosspayments.com"
+    },
+    "version": "2022-11-16"
+  },
+  "servers": [
+    {
+      "url": "https://api.tosspayments.com"
+    }
+  ],
+  "tags": [
+    {
+      "name": "결제",
+      "description": "결제와 관련한 모든 API와 결제 API의 응답으로 돌아오는 Payment 객체를 살펴봅니다."
+    },
+    {
+      "name": "자동결제",
+      "description": "자동결제 API로 고객의 결제수단 정보를 인증·등록한 뒤 상점에서 원하는 시점에 자동으로 결제할 수 있습니다."
+    },
+    {
+      "name": "거래",
+      "description": "거래 조회 API로 원하는 기간 동안의 거래 기록을 조회하고 대조 확인하는 작업을 할 수 있습니다."
+    },
+    {
+      "name": "정산",
+      "description": "정산 조회 API로 원하는 기간 동안의 정산 기록을 조회하고 대조 확인하는 작업을 할 수 있습니다."
+    },
+    {
+      "name": "현금영수증",
+      "description": "현금영수증 발급 및 취소 API입니다.",
+      "externalDocs": {
+        "description": "현금영수증 발급 및 취소하기 가이드",
+        "url": "https://docs.tosspayments.com/common/apis/cash-receipt"
+      }
+    },
+    {
+      "name": "지급대행",
+      "description": "지급대행 API를 사용해 상점 하위의 서브몰 정보를 관리하고 정산된 금액을 서브몰에 지급할 수 있습니다.",
+      "externalDocs": {
+        "description": "지급대행하기 가이드",
+        "url": "https://docs.tosspayments.com/common/apis/payout-submall"
+      }
+    },
+    {
+      "name": "프로모션",
+      "description": "프로모션 정보를 조회합니다."
+    }
+  ],
+  "paths": {
+    "/v1/payments/confirm": {
+      "post": {
+        "tags": ["결제"],
+        "summary": "결제 승인",
+        "description": "`paymentKey`에 해당하는 결제를 검증하고 승인합니다.",
+        "operationId": "paymentsConfirm",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "paymentKey": {
+                    "type": "string",
+                    "description": "결제의 키 값입니다. 결제를 식별하는 역할로, 중복되지 않는 고유한 값입니다.",
+                    "maxLength": 200
+                  },
+                  "orderId": {
+                    "type": "string",
+                    "description": "주문 ID입니다. 주문한 결제를 식별합니다.\n\n충분히 무작위한 값을 생성해서 각 주문마다 고유한 값을 넣어주세요.\n\n영문 대소문자, 숫자, 특수문자 `-`, `_`로 이루어진 6자 이상 64자 이하의 문자열이어야 합니다.\n\n결제 데이터 관리를 위해 반드시 저장해야 합니다.",
+                    "pattern": "^[a-zA-Z0-9-_.]+$",
+                    "minLength": 6,
+                    "maxLength": 64
+                  },
+                  "amount": {
+                    "type": "number",
+                    "description": "결제할 금액입니다.",
+                    "minimum": 1
+                  }
+                },
+                "required": ["paymentKey", "orderId", "amount"]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "결제 승인에 성공했다면 Payment 객체가 돌아옵니다.\n\n사용한 결제수단 필드에 값이 제대로 들어왔는지 확인하세요.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payment"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "결제 승인에 실패했다면 HTTP 상태 코드와 함께 에러 객체가 돌아옵니다.\n\n[결제 승인 API에서 발생할 수 있는 에러](https://docs.tosspayments.com/reference/error-codes#%EA%B2%B0%EC%A0%9C-%EC%8A%B9%EC%9D%B8)를 살펴보세요.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Failure"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/payments/{paymentKey}": {
+      "get": {
+        "tags": ["결제"],
+        "summary": "paymentKey로 결제 조회",
+        "description": "승인된 결제를 `paymentKey`로 조회합니다. `paymentKey`는 SDK를 통해 결제를 진행한 결과로 돌아온 `Payment` 객체에 담겨있습니다.\n\n자세한 내용은 [결제 기록 조회하기](https://docs.tosspayments.com/common/apis/get-payment#%EA%B2%B0%EC%A0%9C-%EA%B8%B0%EB%A1%9D-%EC%A1%B0%ED%9A%8C%ED%95%98%EA%B8%B0) 가이드에서 살펴보세요.",
+        "operationId": "getPaymentByPaymentKey",
+        "parameters": [
+          {
+            "name": "paymentKey",
+            "in": "path",
+            "description": "결제의 키 값입니다. 결제를 식별하는 역할로, 중복되지 않는 고유한 값입니다.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "결제 조회에 성공했다면 Payment 객체가 돌아옵니다.\n\n사용한 결제수단 필드에 값이 제대로 들어왔는지 확인하세요.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payment"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "결제 조회에 실패했다면 HTTP 상태 코드와 함께 에러 객체가 돌아옵니다.\n\n[결제 조회 API에서 발생할 수 있는 에러](https://docs.tosspayments.com/reference/error-codes#%EA%B2%B0%EC%A0%9C-%EC%8A%B9%EC%9D%B8)를 살펴보세요.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Failure"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/payments/{orderId}": {
+      "get": {
+        "tags": ["결제"],
+        "summary": "orderId로 결제 조회",
+        "description": "승인된 결제를 `orderId`로 조회합니다.",
+        "operationId": "getPaymentByOrderId",
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "description": "주문 ID입니다. 주문한 결제를 식별합니다.\n\n충분히 무작위한 값을 생성해서 각 주문마다 고유한 값을 넣어주세요.\n\n영문 대소문자, 숫자, 특수문자 `-`, `_`로 이루어진 6자 이상 64자 이하의 문자열이어야 합니다.\n\n결제 데이터 관리를 위해 반드시 저장해야 합니다.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9-_.]+$",
+              "minLength": 6,
+              "maxLength": 64
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "결제 조회에 성공했다면 Payment 객체가 돌아옵니다.\n\n사용한 결제수단 필드에 값이 제대로 들어왔는지 확인하세요.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payment"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "결제 조회에 실패했다면 HTTP 상태 코드와 함께 에러 객체가 돌아옵니다.\n\n[결제 조회 API에서 발생할 수 있는 에러](https://docs.tosspayments.com/reference/error-codes#%EA%B2%B0%EC%A0%9C-%EC%8A%B9%EC%9D%B8)를 살펴보세요.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Failure"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/payments/{paymentKey}/cancel": {
+      "post": {
+        "tags": ["결제"],
+        "summary": "결제 취소",
+        "description": "승인된 결제를 `paymentKey`로 취소합니다. 자세한 내용은 [결제 취소하기](https://docs.tosspayments.com/common/apis/cancel-payment) 가이드에서 살펴보세요.",
+        "operationId": "cancelPayment",
+        "parameters": [
+          {
+            "name": "paymentKey",
+            "in": "path",
+            "description": "결제의 키 값입니다. 결제를 식별하는 역할로, 중복되지 않는 고유한 값입니다.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "[멱등키](https://docs.tosspayments.com/reference/using-api/idempotency-key)를 요청 헤더에 추가하면 중복 취소 없이 안전하게 처리됩니다.",
+            "schema": {
+              "type": "string",
+              "maxLength": 300
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cancelReason": {
+                    "type": "string",
+                    "description": "결제를 취소하는 이유입니다.",
+                    "maxLength": 200
+                  },
+                  "cancelAmount": {
+                    "type": "number",
+                    "description": "취소할 금액입니다. 값이 없으면 전액 취소됩니다."
+                  },
+                  "refundReceiveAccount": {
+                    "type": "object",
+                    "description": "결제 취소 후 금액이 환불될 계좌의 정보입니다. **가상계좌 결제에만 필수입니다.** 다른 결제수단으로 이루어진 결제를 취소할 때는 사용하지 않습니다.",
+                    "properties": {
+                      "bank": {
+                        "type": "string",
+                        "description": "취소 금액을 환불받을 계좌의 은행 코드입니다. [은행 코드](https://docs.tosspayments.com/reference/codes#%EC%9D%80%ED%96%89-%EC%BD%94%EB%93%9C)와 [증권사 코드](https://docs.tosspayments.com/reference/codes#%EC%A6%9D%EA%B6%8C%EC%82%AC-%EC%BD%94%EB%93%9C)를 참고하세요."
+                      },
+                      "accountNumber": {
+                        "type": "string",
+                        "description": "취소 금액을 환불받을 계좌의 계좌번호입니다. `-` 없이 숫자만 넣어야 합니다.",
+                        "pattern": "^[0-9]+$",
+                        "maxLength": 20
+                      },
+                      "holderName": {
+                        "type": "string",
+                        "description": "취소 금액을 환불받을 계좌의 예금주입니다.",
+                        "maxLength": 60
+                      }
+                    },
+                    "required": ["bank", "accountNumber", "holderName"]
+                  },
+                  "taxFreeAmount": {
+                    "type": "number",
+                    "description": "취소할 금액 중 면세 금액입니다. 값을 넣지 않으면 기본값인 `0`으로 설정됩니다.",
+                    "default": 0
+                  },
+                  "currency": {
+                    "type": "string",
+                    "description": "취소 통화입니다. [PayPal 해외간편결제](https://docs.tosspayments.com/guides/payment-widget/integration-paypal) 부분 취소에는 필수 값입니다. PayPal에서 사용할 수 있는 통화는 `USD`입니다.",
+                    "enum": ["USD"],
+                    "default": "USD"
+                  },
+                  "refundableAmount": {
+                    "type": "number",
+                    "description": "현재 환불 가능한 금액입니다. 결제 취소를 안전하게 처리합니다.\n\n환불 가능한 잔액 정보가 `refundableAmount`의 값과 다르면 취소를 처리하지 않고 에러를 내보냅니다.\n\n* 이 파라미터는 더 이상 사용을 권장하지 않습니다. 안전하게 취소하려면 [멱등키](https://docs.tosspayments.com/reference/using-api/idempotency-key)를 대신 사용해주세요.",
+                    "deprecated": true
+                  }
+                },
+                "required": ["cancelReason"]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "결제 취소에 성공했다면 Payment 객체의 cancels 필드에 취소 객체가 배열로 돌아옵니다.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payment"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "결제 취소에 실패했다면 HTTP 상태 코드와 함께 에러 객체가 돌아옵니다.\n\n[결제 취소 API에서 발생할 수 있는 에러](https://docs.tosspayments.com/reference/error-codes#%EA%B2%B0%EC%A0%9C-%EC%8A%B9%EC%9D%B8)를 살펴보세요.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Failure"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/payments/key-in": {
+      "post": {
+        "tags": ["결제"],
+        "summary": "카드 번호 결제",
+        "description": "결제할 카드 번호 및 기타 카드 정보로 결제를 요청합니다.\n* 카드 번호 결제 API는 추가 계약 후 사용할 수 있습니다.",
+        "operationId": "requestKeyInPayment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "amount": {
+                    "type": "integer",
+                    "description": "결제할 금액입니다.",
+                    "minimum": 1
+                  },
+                  "orderId": {
+                    "type": "string",
+                    "description": "주문 ID입니다. 주문한 결제를 식별합니다.\n\n충분히 무작위한 값을 생성해서 각 주문마다 고유한 값을 넣어주세요.\n\n영문 대소문자, 숫자, 특수문자 `-`, `_`로 이루어진 6자 이상 64자 이하의 문자열이어야 합니다.\n\n결제 데이터 관리를 위해 반드시 저장해야 합니다.",
+                    "pattern": "^[a-zA-Z0-9-_.]+$",
+                    "minLength": 6,
+                    "maxLength": 64
+                  },
+                  "cardNumber": {
+                    "type": "string",
+                    "description": "카드 번호입니다.",
+                    "pattern": "^[0-9]+$",
+                    "maxLength": 20
+                  },
+                  "cardExpirationYear": {
+                    "type": "string",
+                    "description": "카드 유효 연도입니다.",
+                    "pattern": "^[0-9]+$",
+                    "minLength": 2,
+                    "maxLength": 2
+                  },
+                  "cardExpirationMonth": {
+                    "type": "string",
+                    "description": "카드 유효 월입니다.",
+                    "pattern": "^[0-9]+$",
+                    "minLength": 2,
+                    "maxLength": 2
+                  },
+                  "orderName": {
+                    "type": "string",
+                    "description": "주문명입니다.",
+                    "maxLength": 100,
+                    "example": "생수 외 1건"
+                  },
+                  "customerIdentityNumber": {
+                    "type": "string",
+                    "description": "카드 소유자 정보입니다. 생년월일 6자리(`YYMMDD`) 혹은 사업자등록번호 10자리가 들어갑니다.",
+                    "pattern": "^[0-9]+$",
+                    "minLength": 6,
+                    "maxLength": 10
+                  },
+                  "cardPassword": {
+                    "type": "string",
+                    "description": "카드 비밀번호 앞 두 자리입니다.",
+                    "pattern": "^[0-9]+$",
+                    "minLength": 2,
+                    "maxLength": 2
+                  },
+                  "cardInstallmentPlan": {
+                    "type": "integer",
+                    "description": "신용 카드의 할부 개월 수입니다. 값을 넣으면 해당 할부 개월 수로 결제가 진행됩니다. `2`부터 `12`사이의 값을 사용할 수 있고, `0`이 들어가면 할부가 아닌 일시불로 결제됩니다. 결제 금액이 5만원 이상일 때만 할부가 적용됩니다.",
+                    "minimum": 0,
+                    "maximum": 12
+                  },
+                  "useFreeInstallmentPlan": {
+                    "type": "boolean",
+                    "description": "카드사 무이자 할부 적용 여부입니다. 기본값은 `false`입니다.\n\n값이 `true`이면 `cardInstallmentPlan`에 지정한 할부 개월로 무이자 할부가 적용됩니다."
+                  },
+                  "taxFreeAmount": {
+                    "type": "number",
+                    "description": "결제할 금액 중 면세 금액입니다. 값을 넣지 않으면 기본값인 `0`으로 설정됩니다.",
+                    "default": 0
+                  },
+                  "customerEmail": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "고객의 이메일 주소입니다. 결제 결과를 알려줄 때 사용합니다.",
+                    "pattern": "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+.[a-zA-Z0-9-.]+$",
+                    "maxLength": 100
+                  },
+                  "customerName": {
+                    "type": "string",
+                    "description": "고객 이름입니다.",
+                    "maxLength": 100
+                  },
+                  "vbv": {
+                    "type": "object",
+                    "description": "해외 카드 결제의 3DS 인증에 사용합니다. **3DS 인증 결과를 전송해야 되면 필수입니다.**",
+                    "properties": {
+                      "cavv": {
+                        "type": "object",
+                        "description": "3D Secure 인증 세션의 인증 값입니다."
+                      },
+                      "xid": {
+                        "type": "object",
+                        "description": "트랜잭션 ID입니다."
+                      },
+                      "eci": {
+                        "type": "object",
+                        "description": "3DS 인증 결과의 코드 값입니다."
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "amount",
+                  "orderId",
+                  "cardNumber",
+                  "cardExpirationYear",
+                  "cardExpirationMonth",
+                  "orderName",
+                  "customerIdentityNumber"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "카드 번호 결제에 성공했다면 Payment 객체가 돌아옵니다.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payment"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "카드 번호 결제에 실패했다면 HTTP 상태 코드와 함께 에러 객체가 돌아옵니다.\n\n[카드 번호 결제 API에서 발생할 수 있는 에러](https://docs.tosspayments.com/reference/error-codes#%EA%B2%B0%EC%A0%9C-%EC%8A%B9%EC%9D%B8)를 살펴보세요.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Failure"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/virtual-accounts": {
+      "post": {
+        "tags": ["결제"],
+        "summary": "가상계좌 발급 요청",
+        "description": "구매자가 원하는 은행의 [가상계좌](https://docs.tosspayments.com/resources/glossary/virtual-account) 발급을 요청합니다.",
+        "operationId": "requestVirtualAccounts",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "amount": {
+                    "type": "integer",
+                    "description": "결제할 금액입니다.",
+                    "minimum": 1
+                  },
+                  "orderId": {
+                    "type": "string",
+                    "description": "주문 ID입니다. 주문한 결제를 식별합니다.\n\n충분히 무작위한 값을 생성해서 각 주문마다 고유한 값을 넣어주세요.\n\n영문 대소문자, 숫자, 특수문자 `-`, `_`로 이루어진 6자 이상 64자 이하의 문자열이어야 합니다.\n\n결제 데이터 관리를 위해 반드시 저장해야 합니다.",
+                    "pattern": "^[a-zA-Z0-9-_.]+$",
+                    "minLength": 6,
+                    "maxLength": 64
+                  },
+                  "orderName": {
+                    "type": "string",
+                    "description": "주문명입니다.",
+                    "maxLength": 100,
+                    "example": "생수 외 1건"
+                  },
+                  "customerName": {
+                    "type": "string",
+                    "description": "고객 이름입니다.",
+                    "maxLength": 100
+                  },
+                  "bank": {
+                    "type": "string",
+                    "description": "가상계좌를 발급할 은행입니다. 가상계좌 발급이 가능한 [은행](https://docs.tosspayments.com/guides/payment/virtual-account)을 참고하세요.",
+                    "maxLength": 20
+                  },
+                  "accountKey": {
+                    "type": "string",
+                    "description": "고정 가상계좌를 사용하는 고객과 매칭시킨 계좌의 고유한 키 값입니다. 특정 고객에게 같은 가상계좌를 다시 발급하려면 처음 고정 가상계좌를 발급할 때 사용했던 accountKey를 넘겨주세요.",
+                    "maxLength": 13
+                  },
+                  "validHours": {
+                    "type": "integer",
+                    "description": "가상계좌가 발급 시점으로부터의 유효한 시간 범위입니다. 설정한 `validHours` 안에 구매자가 입금을 하지 않으면 주문은 취소됩니다. 가상계좌 발급 후 일정 시간 뒤에 반납됩니다. 값을 넣지 않으면 기본값 `168`시간(7일)으로 설정됩니다. 설정할 수 있는 최대값은 `720`시간(30일)입니다. `validHours`와 `dueDate` 중 하나만 사용할 수 있습니다.",
+                    "pattern": "^[0-9]+$",
+                    "default": 168,
+                    "maximum": 720
+                  },
+                  "customerEmail": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "고객의 이메일 주소입니다. 결제 결과를 알려줄 때 사용합니다.",
+                    "pattern": "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+.[a-zA-Z0-9-.]+$",
+                    "maxLength": 100
+                  },
+                  "customerMobilePhone": {
+                    "type": "string",
+                    "description": "고객의 휴대폰 번호입니다. 가상계좌 입금 안내가 전송되는 번호입니다."
+                  },
+                  "taxFreeAmount": {
+                    "type": "number",
+                    "description": "결제할 금액 중 면세 금액입니다. 값을 넣지 않으면 기본값인 `0`으로 설정됩니다.",
+                    "default": 0
+                  },
+                  "useEscrow": {
+                    "type": "boolean",
+                    "description": "[에스크로](https://docs.tosspayments.com/resources/glossary/escrow) 사용 여부입니다. 값을 넣지 않으면 기본값인 `false`로 설정되고 사용자가 에스크로 결제 여부를 선택합니다.",
+                    "default": false
+                  },
+                  "cashReceipt": {
+                    "type": "object",
+                    "description": "현금영수증 발급 정보를 담는 객체입니다.",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "현금영수증 발급 용도입니다.",
+                        "enum": ["소득공제", "지출증빙", "미발행"]
+                      },
+                      "registrationNumber": {
+                        "type": "string",
+                        "description": "현금영수증 발급에 필요한 개인 식별 번호입니다. 현금영수증 종류에 따라 휴대폰 번호, 주민등록번호, 사업자등록번호, 카드 번호 등을 입력할 수 있습니다.",
+                        "maxLength": 30
+                      }
+                    }
+                  },
+                  "escrowProducts": {
+                    "type": "array",
+                    "description": "각 상품의 상세 정보를 담는 배열입니다. 예를 들어 사용자가 세 가지 종류의 상품을 구매했다면 길이가 3인 배열이어야 합니다. 에스크로 결제를 사용할 때만 필요한 파라미터입니다.",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "상품의 ID입니다. 이 값은 유니크해야 합니다."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "상품 이름입니다."
+                        },
+                        "code": {
+                          "type": "string",
+                          "description": "상점에서 사용하는 상품 관리 코드입니다."
+                        },
+                        "unitPrice": {
+                          "type": "integer",
+                          "description": "상품의 가격입니다. 전체를 합한 가격이 아닌 상품의 개당 가격입니다."
+                        },
+                        "quantity": {
+                          "type": "integer",
+                          "description": "상품 구매 수량입니다."
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "amount",
+                  "orderId",
+                  "orderName",
+                  "customerName",
+                  "bank"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "가상계좌 발급 요청에 성공했다면 virtualAccount 필드에 값이 있는 Payment 객체가 돌아옵니다.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payment"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "가상계좌 발급 요청에 실패했다면 HTTP 상태 코드와 함께 에러 객체가 돌아옵니다.\n\n[가상계좌 발급 요청 API에서 발생할 수 있는 에러](https://docs.tosspayments.com/reference/error-codes#%EA%B2%B0%EC%A0%9C-%EC%8A%B9%EC%9D%B8)를 살펴보세요.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Failure"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/cash-receipts": {
+      "post": {
+        "tags": ["현금영수증"],
+        "summary": "현금영수증 발급 요청",
+        "description": "[현금영수증](https://docs.tosspayments.com/resources/glossary/cash-receipt) 발급을 요청합니다.",
+        "operationId": "requestCashReceipts",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "amount": {
+                    "type": "integer",
+                    "description": "현금영수증을 발급할 금액입니다.",
+                    "minimum": 1
+                  },
+                  "orderId": {
+                    "type": "string",
+                    "description": "주문 ID입니다. 주문한 결제를 식별합니다.\n\n충분히 무작위한 값을 생성해서 각 주문마다 고유한 값을 넣어주세요.\n\n영문 대소문자, 숫자, 특수문자 `-`, `_`로 이루어진 6자 이상 64자 이하의 문자열이어야 합니다.\n\n결제 데이터 관리를 위해 반드시 저장해야 합니다.",
+                    "pattern": "^[a-zA-Z0-9-_.]+$",
+                    "minLength": 6,
+                    "maxLength": 64
+                  },
+                  "orderName": {
+                    "type": "string",
+                    "description": "주문명입니다.",
+                    "maxLength": 100,
+                    "example": "생수 외 1건"
+                  },
+                  "customerIdentityNumber": {
+                    "type": "string",
+                    "description": "(2022-07-27~) 현금영수증 발급에 필요한 소비자 인증수단입니다. 현금영수증을 발급한 주체를 식별합니다. \n\n현금영수증 종류에 따라 휴대폰 번호, 주민등록번호, 사업자등록번호, 현금영수증 카드 번호 등을 입력할 수 있습니다.",
+                    "pattern": "^[0-9]+$",
+                    "maxLength": 30
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "현금영수증의 종류입니다. `소득공제`, `지출증빙` 중 하나입니다.",
+                    "enum": ["소득공제", "지출증빙"]
+                  },
+                  "taxFreeAmount": {
+                    "type": "number",
+                    "description": "결제할 금액 중 면세 금액입니다. 값을 넣지 않으면 기본값인 `0`으로 설정됩니다.",
+                    "default": 0
+                  }
+                },
+                "required": [
+                  "amount",
+                  "orderId",
+                  "cardNumber",
+                  "cardExpirationYear",
+                  "cardExpirationMonth",
+                  "orderName",
+                  "customerIdentityNumber"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "카드 번호 결제에 성공했다면 Payment 객체가 돌아옵니다.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payment"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "카드 번호 결제에 실패했다면 HTTP 상태 코드와 함께 에러 객체가 돌아옵니다.\n\n[카드 번호 결제 API에서 발생할 수 있는 에러](https://docs.tosspayments.com/reference/error-codes#%EA%B2%B0%EC%A0%9C-%EC%8A%B9%EC%9D%B8)를 살펴보세요.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Failure"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Payment": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "description": "(v1.2~) Payment 객체의 응답 버전입니다. [버전 2022-06-08](https://docs.tosspayments.com/resources/release-note#2022-06-08)부터 날짜 기반 버저닝을 사용합니다.",
+            "example": "2022-11-16"
+          },
+          "paymentKey": {
+            "type": "string",
+            "description": "결제의 키 값입니다. 결제를 식별하는 역할로, 중복되지 않는 고유한 값입니다.\n\n결제 데이터 관리를 위해 반드시 저장해야 합니다. 결제 상태가 변해도 값이 유지됩니다.\n\n결제 승인, 결제 조회, 결제 취소 API에 사용합니다.",
+            "maxLength": 200
+          },
+          "type": {
+            "type": "string",
+            "description": "(v1.2~) 결제 타입 정보입니다.",
+            "enum": ["NORMAL", "BILLING", "BRANDPAY"],
+            "example": "NORMAL"
+          },
+          "orderId": {
+            "type": "string",
+            "description": "주문 ID입니다. 주문한 결제를 식별하는 역할로, 결제를 요청할 때 가맹점에서 만들어서 사용한 값입니다.\n\n결제 데이터 관리를 위해 반드시 저장해야 합니다. 중복되지 않는 고유한 값을 발급해야 합니다. 결제 상태가 변해도 값이 유지됩니다.",
+            "minLength": 6,
+            "maxLength": 64
+          },
+          "orderName": {
+            "type": "string",
+            "description": "(v1.3~) 주문명입니다.",
+            "maxLength": 100,
+            "example": "생수 외 1건"
+          },
+          "mId": {
+            "type": "string",
+            "description": "상점아이디(MID)입니다. 토스페이먼츠에서 발급합니다.",
+            "example": "vivarepublica",
+            "maxLength": 14
+          },
+          "currency": {
+            "type": "string",
+            "description": "결제할 때 사용한 통화입니다.",
+            "example": "KRW"
+          },
+          "method": {
+            "type": "string",
+            "description": "결제수단입니다.",
+            "enum": [
+              "카드",
+              "가상계좌",
+              "간편결제",
+              "휴대폰",
+              "계좌이체",
+              "문화상품권",
+              "도서문화상품권",
+              "게임문화상품권"
+            ],
+            "example": "카드"
+          },
+          "totalAmount": {
+            "type": "string",
+            "description": "총 결제 금액입니다. 결제가 취소되는 등 결제 상태가 변해도 최초에 결제된 결제 금액으로 유지됩니다."
+          },
+          "balanceAmount": {
+            "type": "string",
+            "description": "취소할 수 있는 금액(잔고)입니다. 이 값은 결제 취소나 부분 취소가 되고 나서 남은 값입니다.\n\n결제 상태 변화에 따라 `vat`, `suppliedAmount`, `taxFreeAmount`, `taxExemptionAmount`와 함께 값이 변합니다."
+          },
+          "status": {
+            "type": "string",
+            "description": "결제 처리 상태입니다. 아래와 같은 상태 값을 가질 수 있습니다. 상태 변화 흐름이 궁금하다면 [흐름도](https://docs.tosspayments.com/common/webhook#payment_status_changed)를 살펴보세요.",
+            "enum": [
+              "READY",
+              "IN_PROGRESS",
+              "WAITING_FOR_DEPOSIT",
+              "DONE",
+              "CANCELED",
+              "PARTIAL_CANCELED",
+              "ABORTED",
+              "EXPIRED"
+            ],
+            "example": "DONE"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "결제가 일어난 날짜와 시간 정보입니다. ISO 8601 형식입니다.",
+            "example": "2022-01-01T00:00:00+09:00"
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "결제 승인이 일어난 날짜와 시간 정보입니다. ISO 8601 형식입니다.",
+            "example": "2022-01-01T00:00:00+09:00"
+          },
+          "useEscrow": {
+            "type": "boolean",
+            "description": "[에스크로](https://docs.tosspayments.com/resources/glossary/escrow) 사용 여부입니다."
+          },
+          "lastTransactionKey": {
+            "type": "string",
+            "description": "마지막 거래의 키 값입니다. 한 결제 건의 승인 거래와 취소 거래를 구분하는 데 사용됩니다.\n\n예를 들어 결제 승인 후 부분 취소를 두 번 했다면 마지막 부분 취소 거래의 키 값이 할당됩니다.",
+            "maxLength": 64
+          },
+          "suppliedAmount": {
+            "type": "number",
+            "description": "(v1.3~) 공급가액입니다. 결제 취소 및 부분 취소가 되면 공급가액도 일부 취소되어 값이 바뀝니다."
+          },
+          "vat": {
+            "type": "number",
+            "description": "(v1.3~) 부가세입니다. 결제 취소 및 부분 취소가 되면 부가세도 일부 취소되어 값이 바뀝니다.\n\n더 자세한 내용은 [세금 처리하기](https://docs.tosspayments.com/common/tax)에서 살펴보세요."
+          },
+          "cultureExpense": {
+            "type": "boolean",
+            "description": "(v1.3~) 문화비(도서, 공연 티켓, 박물관·미술관 입장권 등) 지출 여부입니다. [계좌이체](https://docs.tosspayments.com/resources/glossary/transfer-payment), [가상계좌](https://docs.tosspayments.com/resources/glossary/virtual-account) 결제에만 적용됩니다."
+          },
+          "taxFreeAmount": {
+            "type": "number",
+            "description": "(v1.3~) 결제 금액 중 면세 금액입니다. 결제 취소 및 부분 취소가 되면 면세 금액도 일부 취소되어 값이 바뀝니다."
+          },
+          "taxExemptionAmount": {
+            "type": "integer",
+            "description": "과세를 제외한 결제 금액(컵 보증금 등)입니다. 이 값은 결제 취소 및 부분 취소가 되면 과세 제외 금액도 일부 취소되어 값이 바뀝니다."
+          },
+          "cancels": {
+            "type": "array",
+            "description": "결제 취소 이력이 담기는 배열입니다.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "cancelAmount": {
+                  "type": "number",
+                  "description": "결제를 취소한 금액입니다."
+                },
+                "cancelReason": {
+                  "type": "string",
+                  "description": "결제를 취소한 이유입니다.",
+                  "maxLength": 200
+                },
+                "taxFreeAmount": {
+                  "type": "number",
+                  "description": "취소된 금액 중 면세 금액입니다."
+                },
+                "taxExemptionAmount": {
+                  "type": "integer",
+                  "description": "취소된 금액 중 과세 제외 금액(컵 보증금 등)입니다."
+                },
+                "refundableAmount": {
+                  "type": "number",
+                  "description": "결제 취소 후 환불 가능한 잔액입니다."
+                },
+                "easyPayDiscountAmount": {
+                  "type": "number",
+                  "description": "간편결제 서비스의 포인트, 쿠폰, 즉시할인과 같은 [적립식 결제수단](https://docs.tosspayments.com/common/easypay-response#%EA%B0%84%ED%8E%B8%EA%B2%B0%EC%A0%9C-%EA%B2%B0%EC%A0%9C%EC%88%98%EB%8B%A8-%ED%83%80%EC%9E%85)에서 취소된 금액입니다."
+                },
+                "canceledAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "결제 취소가 일어난 날짜와 시간 정보입니다. ISO 8601 형식입니다.",
+                  "example": "2022-01-01T00:00:00+09:00"
+                },
+                "transactionKey": {
+                  "type": "string",
+                  "description": "취소 건의 키 값입니다. 여러 건의 취소 거래를 구분하는 데 사용됩니다.",
+                  "maxLength": 64
+                },
+                "receiptKey": {
+                  "type": "string",
+                  "description": "취소 건의 현금영수증 키 값입니다.",
+                  "maxLength": 200
+                }
+              },
+              "required": [
+                "cancelAmount",
+                "cancelReason",
+                "taxFreeAmount",
+                "taxExemptionAmount",
+                "refundableAmount",
+                "easyPayDiscountAmount",
+                "canceledAt",
+                "transactionKey"
+              ]
+            }
+          },
+          "isPartialCancelable": {
+            "type": "boolean",
+            "description": "부분 취소 가능 여부입니다. 이 값이 false이면 전액 취소만 가능합니다."
+          },
+          "card": {
+            "type": "object",
+            "description": "[카드](https://docs.tosspayments.com/resources/glossary/card)로 결제하면 제공되는 카드 관련 정보입니다.",
+            "properties": {
+              "amount": {
+                "type": "number",
+                "description": "카드사에 결제 요청한 금액입니다. 즉시 할인 금액(`discount.amount`)이 포함됩니다.",
+                "minimum": 100
+              },
+              "issuerCode": {
+                "type": "string",
+                "description": "[카드 발급사](https://docs.tosspayments.com/resources/glossary/card#%EC%B9%B4%EB%93%9C-%EB%A7%A4%EC%9E%85%EC%82%AC%EC%99%80-%EB%B0%9C%EA%B8%89%EC%82%AC-%EC%9D%B4%ED%95%B4%ED%95%98%EA%B8%B0) 숫자 코드입니다. [카드사 코드](https://docs.tosspayments.com/reference/codes#%EC%B9%B4%EB%93%9C%EC%82%AC-%EC%BD%94%EB%93%9C)를 참고하세요."
+              },
+              "acquirerCode": {
+                "type": "string",
+                "description": "[카드 매입사](https://docs.tosspayments.com/resources/glossary/card#%EC%B9%B4%EB%93%9C-%EB%A7%A4%EC%9E%85%EC%82%AC%EC%99%80-%EB%B0%9C%EA%B8%89%EC%82%AC-%EC%9D%B4%ED%95%B4%ED%95%98%EA%B8%B0) 숫자 코드입니다. [카드사 코드](https://docs.tosspayments.com/reference/codes#%EC%B9%B4%EB%93%9C%EC%82%AC-%EC%BD%94%EB%93%9C)를 참고하세요."
+              },
+              "number": {
+                "type": "string",
+                "description": "카드번호입니다. 번호의 일부는 마스킹 되어 있습니다.",
+                "maxLength": 20
+              },
+              "installmentPlanMonths": {
+                "type": "integer",
+                "description": "할부 개월 수입니다. 일시불이면 `0`입니다.",
+                "example": 0
+              },
+              "approveNo": {
+                "type": "string",
+                "description": "카드사 승인 번호입니다.",
+                "maxLength": 8
+              },
+              "useCardPoint": {
+                "type": "boolean",
+                "description": "카드사 포인트 사용 여부입니다."
+              },
+              "cardType": {
+                "type": "string",
+                "description": "카드 종류입니다. 고객이 해외 카드로 결제했거나 간편결제의 결제 수단을 조합해서 결제했을 때 `미확인`으로 표시됩니다.",
+                "enum": ["신용", "체크", "기프트", "미확인"],
+                "example": "신용"
+              },
+              "ownerType": {
+                "type": "string",
+                "description": "카드의 소유자 타입입니다. 고객이 해외 카드로 결제했거나 간편결제의 결제 수단을 조합해서 결제했을 때 `미확인`으로 표시됩니다.",
+                "enum": ["개인", "법인", "미확인"],
+                "example": "개인"
+              },
+              "acquireStatus": {
+                "type": "string",
+                "description": "[카드 결제](https://docs.tosspayments.com/resources/glossary/card-payment)의 매입 상태입니다. 아래와 같은 상태 값을 가질 수 있습니다.",
+                "enum": [
+                  "READY",
+                  "REQUESTED",
+                  "COMPLETED",
+                  "CANCEL_REQUESTED",
+                  "CANCELED"
+                ],
+                "example": "COMPLETED"
+              },
+              "isInterestFree": {
+                "type": "boolean",
+                "description": "무이자 할부의 적용 여부입니다."
+              },
+              "interestPayer": {
+                "type": "string",
+                "description": "(v1.4~) 할부가 적용된 결제에서 할부 수수료를 부담하는 주체입니다.",
+                "enum": ["BUYER", "CARD_COMPANY", "MERCHANT"]
+              }
+            },
+            "required": [
+              "amount",
+              "issuerCode",
+              "number",
+              "installmentPlanMonths",
+              "approveNo",
+              "useCardPoint",
+              "cardType",
+              "ownerType",
+              "acquireStatus",
+              "isInterestFree"
+            ]
+          },
+          "virtualAccount": {
+            "type": "object",
+            "properties": {
+              "accountType": {
+                "type": "string",
+                "description": "가상계좌 타입을 나타냅니다.",
+                "enum": ["일반", "고정"]
+              },
+              "accountNumber": {
+                "type": "string",
+                "description": "발급된 계좌번호입니다.",
+                "maxLength": 20
+              },
+              "bankCode": {
+                "type": "string",
+                "description": "가상계좌 은행 숫자 코드입니다. [은행 코드](https://docs.tosspayments.com/reference/codes#%EC%9D%80%ED%96%89-%EC%BD%94%EB%93%9C)와 [증권사 코드](https://docs.tosspayments.com/reference/codes#%EC%A6%9D%EA%B6%8C%EC%82%AC-%EC%BD%94%EB%93%9C)를 참고하세요."
+              },
+              "customerName": {
+                "type": "string",
+                "description": "가상계좌를 발급한 고객 이름입니다.",
+                "maxLength": 100
+              },
+              "dueDate": {
+                "type": "string",
+                "format": "date-time",
+                "description": "입금 기한입니다. ISO 8601 형식입니다.",
+                "example": "2022-01-01T00:00:00+09:00"
+              },
+              "refundStatus": {
+                "type": "string",
+                "description": "환불 처리 상태입니다. 아래와 같은 상태 값을 가질 수 있습니다.",
+                "enum": [
+                  "NONE",
+                  "PENDING",
+                  "FAILED",
+                  "PARTIAL_FAILED",
+                  "COMPLETED"
+                ]
+              },
+              "expired": {
+                "type": "boolean",
+                "description": "가상계좌의 만료 여부입니다."
+              },
+              "settlementStatus": {
+                "type": "string",
+                "description": "정산 상태입니다. 정산이 아직 되지 않았다면 `INCOMPLETED`, 정산이 완료됐다면 `COMPLETED` 값이 들어옵니다.",
+                "enum": ["INCOMPLETED", "COMPLETED"]
+              },
+              "refundReceiveAccount": {
+                "type": "object",
+                "description": "(UNDOCUMENTED) 결제위젯 가상계좌 환불 정보 입력 기능으로 받은 고객의 환불 계좌 정보입니다.",
+                "properties": {
+                  "bankCode": {
+                    "type": "string",
+                    "description": "입력받은 환불 계좌의 은행 코드입니다. [은행 코드](https://docs.tosspayments.com/reference/codes#%EC%9D%80%ED%96%89-%EC%BD%94%EB%93%9C)와 [증권사 코드](https://docs.tosspayments.com/reference/codes#%EC%A6%9D%EA%B6%8C%EC%82%AC-%EC%BD%94%EB%93%9C)를 참고하세요."
+                  },
+                  "accountNumber": {
+                    "type": "string",
+                    "description": "입력받은 환불 계좌의 계좌번호입니다.",
+                    "maxLength": 20
+                  },
+                  "holderName": {
+                    "type": "string",
+                    "description": "입력받은 환불 계좌의 예금주 정보입니다.",
+                    "maxLength": 100
+                  }
+                },
+                "required": ["bankCode", "accountNumber", "holderName"]
+              }
+            },
+            "required": [
+              "accountType",
+              "accountNumber",
+              "bankCode",
+              "customerName",
+              "dueDate",
+              "refundStatus",
+              "expired",
+              "settlementStatus",
+              "refundReceiveAccount"
+            ]
+          },
+          "secret": {
+            "type": "string",
+            "description": "가상계좌 웹훅이 정상적인 요청인지 검증하는 값입니다. 이 값이 [가상계좌 웹훅 이벤트](https://docs.tosspayments.com/common/webhook#%EC%9D%BC%EB%B0%98-%EA%B2%B0%EC%A0%9C---%EA%B0%80%EC%83%81%EA%B3%84%EC%A2%8C) 본문으로 돌아온 secret과 같으면 정상적인 요청입니다.",
+            "maxLength": 50
+          },
+          "mobilePhone": {
+            "type": "object",
+            "description": "휴대폰으로 결제하면 제공되는 [휴대폰 결제](https://docs.tosspayments.com/resources/glossary/mobile-payment) 관련 정보입니다.",
+            "properties": {
+              "customerMobilePhone": {
+                "type": "string",
+                "description": "결제에 사용한 휴대폰 번호입니다."
+              },
+              "settlementStatus": {
+                "type": "string",
+                "description": "정산 상태입니다. 정산이 아직 되지 않았다면 `INCOMPLETED`, 정산이 완료됐다면 `COMPLETED` 값이 들어옵니다.",
+                "enum": ["INCOMPLETED", "COMPLETED"]
+              },
+              "receiptUrl": {
+                "type": "string",
+                "format": "uri",
+                "description": "(v1.4~) 휴대폰 결제 내역 영수증을 확인할 수 있는 주소입니다."
+              }
+            },
+            "required": [
+              "customerMobilePhone",
+              "settlementStatus",
+              "receiptUrl"
+            ]
+          },
+          "giftCertificate": {
+            "type": "object",
+            "description": "[상품권](https://docs.tosspayments.com/resources/glossary/gift-certificate)으로 결제하면 제공되는 상품권 결제 관련 정보입니다.",
+            "properties": {
+              "approveNo": {
+                "type": "string",
+                "description": "결제 승인번호입니다.",
+                "maxLength": 8
+              },
+              "settlementStatus": {
+                "type": "string",
+                "description": "정산 상태입니다. 정산이 아직 되지 않았다면 `INCOMPLETED`, 정산이 완료됐다면 `COMPLETED` 값이 들어옵니다.",
+                "enum": ["INCOMPLETED", "COMPLETED"]
+              }
+            },
+            "required": ["approveNo", "settlementStatus"]
+          },
+          "transfer": {
+            "type": "object",
+            "description": "(v1.1~) [계좌이체](https://docs.tosspayments.com/resources/glossary/transfer-payment)로 결제했을 때 이체 정보가 담기는 객체입니다.",
+            "properties": {
+              "bankCode": {
+                "type": "string",
+                "description": "은행 숫자 코드입니다. [은행 코드](https://docs.tosspayments.com/reference/codes#%EC%9D%80%ED%96%89-%EC%BD%94%EB%93%9C)와 [증권사 코드](https://docs.tosspayments.com/reference/codes#%EC%A6%9D%EA%B6%8C%EC%82%AC-%EC%BD%94%EB%93%9C)를 참고하세요."
+              },
+              "settlementStatus": {
+                "type": "string",
+                "description": "정산 상태입니다. 정산이 아직 되지 않았다면 `INCOMPLETED`, 정산이 완료됐다면 `COMPLETED` 값이 들어옵니다.",
+                "enum": ["INCOMPLETED", "COMPLETED"]
+              }
+            },
+            "required": ["bankCode", "settlementStatus"]
+          },
+          "receipt": {
+            "type": "object",
+            "description": "발행된 영수증 정보입니다.",
+            "properties": {
+              "url": {
+                "type": "string",
+                "description": "고객에게 제공할 수 있는 결제수단별 영수증입니다.\n\n카드 결제는 매출전표, 가상계좌는 무통장 거래 명세서, 계좌이체・휴대폰・상품권 결제는 결제 거래 내역 확인서가 제공됩니다."
+              }
+            },
+            "required": ["url"]
+          },
+          "checkout": {
+            "type": "object",
+            "description": "결제창 정보입니다.",
+            "properties": {
+              "url": {
+                "type": "string",
+                "description": "결제창이 열리는 주소입니다."
+              }
+            },
+            "required": ["url"]
+          },
+          "easyPay": {
+            "type": "object",
+            "description": "(v1.2~) [간편결제](https://docs.tosspayments.com/resources/glossary/easypay) 정보입니다. 고객이 선택한 결제수단에 따라 `amount`, `discountAmount`가 달라집니다.\n\n[간편결제 응답 확인 가이드](https://docs.tosspayments.com/common/easypay-response)를 참고하세요.",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "description": "선택한 [간편결제사 코드](https://docs.tosspayments.com/reference/codes#%EA%B0%84%ED%8E%B8%EA%B2%B0%EC%A0%9C%EC%82%AC-%EC%BD%94%EB%93%9C)입니다."
+              },
+              "amount": {
+                "type": "number",
+                "description": "간편결제 서비스에 등록된 계좌 혹은 현금성 포인트로 결제한 금액입니다."
+              },
+              "discountAmount": {
+                "type": "number",
+                "description": "간편결제 서비스의 적립 포인트나 쿠폰 등으로 즉시 할인된 금액입니다."
+              }
+            },
+            "required": ["provider", "amount", "discountAmount"]
+          },
+          "country": {
+            "type": "string",
+            "description": "(v1.4~) 결제한 국가입니다. [ISO-3166의 두 자리 국가 코드](https://ko.wikipedia.org/wiki/ISO_3166-1_alpha-2) 형식입니다.",
+            "maxLength": 2
+          },
+          "failure": {
+            "type": "object",
+            "description": "(v1.4~) 결제 승인에 실패하면 응답으로 받는 [에러 객체](https://docs.tosspayments.com/reference/using-api/response#%EC%97%90%EB%9F%AC-%EA%B0%9D%EC%B2%B4)입니다. 실패한 결제를 조회할 때 확인할 수 있습니다.",
+            "$ref": "#/components/schemas/Failure"
+          },
+          "cashReceipt": {
+            "type": "object",
+            "description": "현금영수증 정보입니다.",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "현금영수증의 종류입니다. `소득공제`, `지출증빙` 중 하나입니다.",
+                "enum": ["소득공제", "지출증빙"]
+              },
+              "receiptKey": {
+                "type": "string",
+                "description": "현금영수증의 키 값입니다.",
+                "maxLength": 200
+              },
+              "issueNumber": {
+                "type": "string",
+                "description": "현금영수증 발급 번호입니다.",
+                "maxLength": 9
+              },
+              "receiptUrl": {
+                "type": "string",
+                "format": "uri",
+                "description": "발행된 현금영수증을 확인할 수 있는 주소입니다."
+              },
+              "amount": {
+                "type": "number",
+                "description": "현금영수증 처리된 금액입니다.",
+                "minimum": 1
+              },
+              "taxFreeAmount": {
+                "type": "number",
+                "description": "면세 처리된 금액입니다."
+              }
+            },
+            "required": [
+              "type",
+              "receiptKey",
+              "issueNumber",
+              "receiptUrl",
+              "amount",
+              "taxFreeAmount"
+            ]
+          },
+          "cashReceipts": {
+            "type": "array",
+            "description": "[현금영수증](https://docs.tosspayments.com/resources/glossary/cash-receipt) 발행 및 취소 이력이 담기는 배열로 순서가 보장되지 않습니다.\n\n예를 들어 결제 후 부분 취소가 여러 번 일어나면 모든 결제 및 부분 취소 건에 대한 현금영수증을 담고 있습니다.\n\n계좌이체는 결제 즉시 현금영수증 정보를 확인할 수 있습니다. 가상계좌는 고객이 입금을 완료하면 현금영수증 정보를 확인할 수 있습니다.\n\n자세한 내용은 [현금영수증 발급 및 취소 가이드](https://docs.tosspayments.com/common/apis/cash-receipt)에서 확인해주세요.",
+            "items": {
+              "type": "object",
+              "$ref": "#/components/schemas/CashReceipt"
+            }
+          },
+          "discount": {
+            "type": "object",
+            "description": "카드사의 즉시 할인 프로모션 정보입니다. 즉시 할인 프로모션이 적용됐을 때만 생성됩니다.",
+            "properties": {
+              "amount": {
+                "type": "integer",
+                "description": "카드사의 즉시 할인 프로모션을 적용한 금액입니다."
+              }
+            }
+          }
+        },
+        "required": [
+          "approvedAt",
+          "balanceAmount",
+          "country",
+          "cultureExpense",
+          "currency",
+          "isPartialCancelable",
+          "mId",
+          "method",
+          "orderId",
+          "orderName",
+          "paymentKey",
+          "requestedAt",
+          "status",
+          "suppliedAmount",
+          "taxFreeAmount",
+          "totalAmount",
+          "type",
+          "useEscrow",
+          "vat",
+          "version"
+        ]
+      },
+      "CashReceipt": {
+        "type": "object",
+        "properties": {
+          "receiptKey": {
+            "type": "string",
+            "description": "현금영수증의 키 값입니다.",
+            "maxLength": 200
+          },
+          "issueNumber": {
+            "type": "string",
+            "description": "(2022-07-27~) 현금영수증 발급 번호입니다.",
+            "maxLength": 9
+          },
+          "issueStatus": {
+            "type": "string",
+            "description": "(2022-07-27~) 현금영수증 발급 상태입니다. 발급 승인 여부는 요청 후 1-2일 뒤 조회할 수 있습니다.\n\n각 상태의 자세한 설명은 CashReceipt 객체에서 확인할 수 있습니다.",
+            "enum": ["IN_PROGRESS", "COMPLETED", "FAILED"]
+          },
+          "amount": {
+            "type": "number",
+            "description": "(2022-07-27~) 현금영수증 처리된 금액입니다.",
+            "minimum": 1
+          },
+          "taxFreeAmount": {
+            "type": "number",
+            "description": "(2022-07-27~) 면세 처리된 금액입니다."
+          },
+          "orderId": {
+            "type": "string",
+            "description": "주문 ID입니다. 주문한 결제를 식별하는 역할로, 결제를 요청할 때 가맹점에서 만들어서 사용한 값입니다.\n\n결제 데이터 관리를 위해 반드시 저장해야 합니다. 중복되지 않는 고유한 값을 발급해야 합니다. 결제 상태가 변해도 값이 유지됩니다.",
+            "minLength": 6,
+            "maxLength": 64
+          },
+          "orderName": {
+            "type": "string",
+            "description": "주문명입니다.",
+            "maxLength": 100,
+            "example": "생수 외 1건"
+          },
+          "type": {
+            "type": "string",
+            "description": "현금영수증의 종류입니다. `소득공제`, `지출증빙` 중 하나입니다.",
+            "enum": ["소득공제", "지출증빙"]
+          },
+          "transactionType": {
+            "type": "string",
+            "description": "(2022-07-27~) 현금영수증 발급 종류입니다. 현금영수증 발급(`CONFIRM`)·취소(`CANCEL`) 건을 구분합니다.",
+            "enum": ["CONFIRM", "CANCEL"]
+          },
+          "businessNumber": {
+            "type": "string",
+            "description": "(2022-07-27~) 현금영수증을 발급한 사업자등록번호입니다.",
+            "minLength": 10,
+            "maxLength": 10
+          },
+          "customerIdentityNumber": {
+            "type": "string",
+            "description": "(2022-07-27~) 현금영수증 발급에 필요한 소비자 인증수단입니다. 현금영수증을 발급한 주체를 식별합니다. 현금영수증 종류에 따라 휴대폰 번호, 주민등록번호, 사업자등록번호, 현금영수증 카드 번호 등을 입력할 수 있습니다.",
+            "maxLength": 30
+          },
+          "failure": {
+            "type": "object",
+            "description": "(2022-07-27~) 결제 실패 객체입니다.",
+            "$ref": "#/components/schemas/Failure"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "(2022-07-27~) 현금영수증 발급 혹은 취소를 요청한 날짜와 시간 정보입니다. ISO 8601 형식입니다.",
+            "example": "2022-01-01T00:00:00+09:00"
+          },
+          "receiptUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "발행된 현금영수증을 확인할 수 있는 주소입니다."
+          }
+        }
+      },
+      "Failure": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "에러 타입을 보여주는 에러 코드입니다.",
+            "example": "NOT_FOUND_PAYMENT"
+          },
+          "message": {
+            "type": "string",
+            "description": "에러 메시지입니다. 에러 발생 이유를 알려줍니다.",
+            "example": "존재하지 않는 결제 입니다."
+          }
+        },
+        "required": ["code", "message"]
+      }
+    },
+    "securitySchemes": {
+      "basicAuth": {
+        "type": "http",
+        "scheme": "basic"
+      }
+    }
+  }
+}
