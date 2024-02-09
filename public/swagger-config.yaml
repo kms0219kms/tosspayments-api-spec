@@ -1,0 +1,30 @@
+configUrl: "/swagger-config.yaml"
+
+docExpansion: none
+tagsSorter: alpha
+operationsSorter: alpha
+displayOperationId: false
+persistAuthorization: true
+displayRequestDuration: true
+
+urls:
+- url: "https://raw.githubusercontent.com/kms0219kms/tosspayments-api-spec/main/specs/coreApi/2022-11-16.json"
+  name: 코어 API - Version 2022-11-16
+- url: "https://raw.githubusercontent.com/kms0219kms/tosspayments-api-spec/main/specs/coreApi/2022-07-27.json"
+  name: 코어 API - Version 2022-07-27
+- url: "https://raw.githubusercontent.com/kms0219kms/tosspayments-api-spec/main/specs/coreApi/2022-06-08.json"
+  name: 코어 API - Version 2022-06-08
+- url: "https://raw.githubusercontent.com/kms0219kms/tosspayments-api-spec/main/specs/coreApi/1.4.json"
+  name: 코어 API - Version 1.4
+- url: "https://raw.githubusercontent.com/kms0219kms/tosspayments-api-spec/main/specs/coreApi/1.3.json"
+  name: 코어 API - Version 1.3
+- url: "https://raw.githubusercontent.com/kms0219kms/tosspayments-api-spec/main/specs/coreApi/1.2.json"
+  name: 코어 API - Version 1.2
+- url: "https://raw.githubusercontent.com/kms0219kms/tosspayments-api-spec/main/specs/coreApi/1.1.json"
+  name: 코어 API - Version 1.1
+- url: "https://raw.githubusercontent.com/kms0219kms/tosspayments-api-spec/main/specs/coreApi/1.0.json"
+  name: 코어 API - Version 1.0
+- url: "https://raw.githubusercontent.com/kms0219kms/tosspayments-api-spec/main/specs/brandpayApi.json"
+  name: 브랜드페이 API
+
+validatorUrl: ''
