@@ -1,3 +1,6 @@
+@import url('https://font.elice.io/css?family=Elice+Digital+Coding');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
 html {
   box-sizing: border-box;
   overflow: -moz-scrollbars-vertical;
@@ -13,4 +16,15 @@ html {
 body {
   margin: 0;
   background: #fafafa;
+}
+
+body * {
+  font-family: 'Pretendard Variable', sans-serif !important;
+}
+
+code,
+.redoc-wrap .redoc-json *,
+.redoc-wrap .property-name,
+.swagger-ui .opblock-summary-path * {
+  font-family: 'Elice Digital Coding', 'monospace' !important;
 }
