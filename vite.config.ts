@@ -6,6 +6,7 @@ import { createHtmlPlugin } from 'vite-plugin-html'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/tosspayments-api-spec',
   plugins: [react(), tsconfigPaths(), createHtmlPlugin({ minify: true })],
 
   build: {

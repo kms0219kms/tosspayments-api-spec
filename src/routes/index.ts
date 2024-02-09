@@ -1,2 +1,2 @@
-export { default as Swagger } from "./swagger";
-export { default as Redocly } from "./redocly";
+export { default as Swagger } from './swagger'
+export { default as Redocly } from './redocly'
