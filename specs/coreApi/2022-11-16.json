@@ -26,7 +26,11 @@
     },
     {
       "name": "거래",
-      "description": "거래 조회 API로 원하는 기간 동안의 거래 기록을 조회하고 대조 확인하는 작업을 할 수 있습니다."
+      "description": "거래 조회 API로 원하는 기간 동안의 거래 기록을 조회하고 대조 확인하는 작업을 할 수 있습니다.",
+      "externalDocs": {
+        "description": "거래 기록 조회하기 가이드",
+        "url": "https://docs.tosspayments.com/common/apis/get-payment#%EA%B1%B0%EB%9E%98-%EA%B8%B0%EB%A1%9D-%EC%A1%B0%ED%9A%8C%ED%95%98%EA%B8%B0"
+      }
     },
     {
       "name": "정산",
@@ -559,7 +563,6 @@
                   },
                   "cashReceipt": {
                     "type": "object",
-                    "description": "현금영수증 발급 정보를 담는 객체입니다.",
                     "properties": {
                       "type": {
                         "type": "string",
@@ -644,6 +647,91 @@
         ]
       }
     },
+    "/v1/transactions": {
+      "get": {
+        "tags": ["거래"],
+        "summary": "거래 조회",
+        "description": "지정한 날짜 정보로 [거래](https://docs.tosspayments.com/resources/glossary/transaction) 기록을 조회합니다. 거래 조회는 최대 60초가 소요됩니다. 타임아웃 값을 최소 60초로 설정하세요.\n\n자세한 내용은 [거래 기록 조회하기](https://docs.tosspayments.com/common/apis/get-payment#%EA%B1%B0%EB%9E%98-%EA%B8%B0%EB%A1%9D-%EC%A1%B0%ED%9A%8C%ED%95%98%EA%B8%B0) 가이드에서 살펴보세요.",
+        "operationId": "getTransactions",
+        "parameters": [
+          {
+            "name": "startDate",
+            "in": "query",
+            "description": "조회를 시작하고 싶은 날짜와 시간 정보입니다. ISO 8601 형식입니다.\n\n날짜 정보만 입력하면 시간은 자동으로 `00:00:00`으로 설정됩니다.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2022-01-01T00:00:00"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "description": "조회를 마치고 싶은 날짜와 시간 정보입니다. ISO 8601 형식입니다.\n\n날짜 정보만 입력하면 시간은 자동으로 `00:00:00`으로 설정됩니다.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2022-01-02T23:59:59"
+            }
+          },
+          {
+            "name": "startingAfter",
+            "in": "query",
+            "description": "특정 결제 건 이후의 기록을 조회할 때 사용합니다. transactionKey 값을 전달합니다. 많은 양의 기록을 페이지 단위로 나누어 처리할 때 사용할 수 있습니다.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "한 번에 응답받을 기록의 개수입니다. 기본값은 `100`이고 설정할 수 있는 최대값은 `5000`입니다.",
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "maximum": 5000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "거래 조회에 성공했다면 Transaction 객체가 담긴 배열이 돌아옵니다.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Transaction"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "거래 조회에 실패했다면 HTTP 상태 코드와 함께 에러 객체가 돌아옵니다.\n\n[거래 조회 API에서 발생할 수 있는 에러](https://docs.tosspayments.com/reference/error-codes#%EA%B2%B0%EC%A0%9C-%EC%8A%B9%EC%9D%B8)를 살펴보세요.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Failure"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "거래 조회에 실패했다면 HTTP 상태 코드와 함께 에러 객체가 돌아옵니다.\n\n[거래 조회 API에서 발생할 수 있는 에러](https://docs.tosspayments.com/reference/error-codes#%EA%B2%B0%EC%A0%9C-%EC%8A%B9%EC%9D%B8)를 살펴보세요.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Failure"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/cash-receipts": {
       "post": {
         "tags": ["현금영수증"],
@@ -707,17 +795,17 @@
         },
         "responses": {
           "200": {
-            "description": "카드 번호 결제에 성공했다면 Payment 객체가 돌아옵니다.",
+            "description": "현금영수증 발급 요청에 성공했다면 CashReceipt 객체가 돌아옵니다.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Payment"
+                  "$ref": "#/components/schemas/CashReceipt"
                 }
               }
             }
           },
           "422": {
-            "description": "카드 번호 결제에 실패했다면 HTTP 상태 코드와 함께 에러 객체가 돌아옵니다.\n\n[카드 번호 결제 API에서 발생할 수 있는 에러](https://docs.tosspayments.com/reference/error-codes#%EA%B2%B0%EC%A0%9C-%EC%8A%B9%EC%9D%B8)를 살펴보세요.",
+            "description": "현금영수증 발급 요청에 실패했다면 HTTP 상태 코드와 함께 에러 객체가 돌아옵니다.\n\n[현금영수증 발급 요청 API에서 발생할 수 있는 에러](https://docs.tosspayments.com/reference/error-codes#%EA%B2%B0%EC%A0%9C-%EC%8A%B9%EC%9D%B8)를 살펴보세요.",
             "content": {
               "application/json": {
                 "schema": {
@@ -805,6 +893,16 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "현금영수증 조회에 실패했다면 HTTP 상태 코드와 함께 에러 객체가 돌아옵니다.\n\n[현금영수증 조회 API에서 발생할 수 있는 에러](https://docs.tosspayments.com/reference/error-codes#%EA%B2%B0%EC%A0%9C-%EC%8A%B9%EC%9D%B8)를 살펴보세요.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Failure"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -881,6 +979,7 @@
     "schemas": {
       "Payment": {
         "type": "object",
+        "description": "결제 정보를 담고 있는 객체입니다.\n\n결제가 승인됐을 때 응답은 Payment 객체로 항상 동일하지만, 결제수단에 따라 객체 상세 구성이 조금씩 달라집니다.",
         "properties": {
           "version": {
             "type": "string",
@@ -1345,7 +1444,7 @@
           },
           "cashReceipt": {
             "type": "object",
-            "description": "현금영수증 정보입니다.",
+            "description": "[현금영수증](https://docs.tosspayments.com/resources/glossary/cash-receipt) 정보입니다.",
             "properties": {
               "type": {
                 "type": "string",
@@ -1430,6 +1529,7 @@
       },
       "CashReceipt": {
         "type": "object",
+        "description": "[현금영수증](https://docs.tosspayments.com/resources/glossary/cash-receipt) 발급 정보를 담는 객체입니다.",
         "properties": {
           "receiptKey": {
             "type": "string",
@@ -1504,7 +1604,122 @@
             "format": "uri",
             "description": "발행된 현금영수증을 확인할 수 있는 주소입니다."
           }
-        }
+        },
+        "required": [
+          "receiptKey",
+          "issueNumber",
+          "issueStatus",
+          "amount",
+          "taxFreeAmount",
+          "orderId",
+          "orderName",
+          "type",
+          "transactionType",
+          "businessNumber",
+          "customerIdentityNumber",
+          "requestedAt",
+          "receiptUrl"
+        ]
+      },
+      "Transaction": {
+        "type": "object",
+        "description": "[거래](https://docs.tosspayments.com/resources/glossary/transaction) 정보를 담고 있는 객체입니다.\n\n하나의 결제 건에 여러 번의 거래가 일어날 수 있습니다. 결제 승인, 취소, 부분 취소가 이루어질 때마다 각각의 거래 정보를 담은 Transaction 객체가 만들어지고 개별 `transactionKey`를 가지게 됩니다.",
+        "properties": {
+          "mId": {
+            "type": "string",
+            "description": "상점아이디(MID)입니다. 토스페이먼츠에서 발급합니다.",
+            "example": "vivarepublica",
+            "maxLength": 14
+          },
+          "transactionKey": {
+            "type": "string",
+            "description": "거래의 키 값입니다. 한 결제 건의 승인 거래와 취소 거래를 구분하는 데 사용됩니다.",
+            "maxLength": 64
+          },
+          "paymentKey": {
+            "type": "string",
+            "description": "결제의 키 값입니다. 결제를 식별하는 역할로, 중복되지 않는 고유한 값입니다.\n\n결제 데이터 관리를 위해 반드시 저장해야 합니다. 결제 상태가 변해도 값이 유지됩니다.",
+            "maxLength": 200
+          },
+          "orderId": {
+            "type": "string",
+            "description": "주문 ID입니다. 주문한 결제를 식별하는 역할로, 결제를 요청할 때 가맹점에서 만들어서 사용한 값입니다.\n\n결제 데이터 관리를 위해 반드시 저장해야 합니다. 중복되지 않는 고유한 값을 발급해야 합니다. 결제 상태가 변해도 값이 유지됩니다.",
+            "minLength": 6,
+            "maxLength": 64
+          },
+          "method": {
+            "type": "string",
+            "description": "결제수단입니다.",
+            "enum": [
+              "카드",
+              "가상계좌",
+              "간편결제",
+              "휴대폰",
+              "계좌이체",
+              "문화상품권",
+              "도서문화상품권",
+              "게임문화상품권"
+            ]
+          },
+          "customerKey": {
+            "type": "string",
+            "description": "고객 ID입니다. 빌링키와 연결됩니다. 가맹점에서 직접 생성하고 관리하는 값입니다. 다른 사용자가 이 값을 알게 되면 악의적으로 사용될 수 있습니다. 자동 증가하는 숫자 또는 이메일・전화번호・사용자 아이디와 같이 유추가 가능한 값은 안전하지 않습니다. UUID와 같이 충분히 무작위적인 고유 값으로 생성해주세요.",
+            "pattern": "^[a-zA-Z0-9-_=.,@]+$",
+            "minLength": 2,
+            "maxLength": 300
+          },
+          "useEscrow": {
+            "type": "boolean",
+            "description": "[에스크로](https://docs.tosspayments.com/resources/glossary/escrow) 사용 여부입니다."
+          },
+          "receiptUrl": {
+            "type": "string",
+            "description": "거래 영수증을 확인할 수 있는 주소입니다."
+          },
+          "status": {
+            "type": "string",
+            "description": "결제 처리 상태입니다. 아래와 같은 상태 값을 가질 수 있습니다. 상태 변화 흐름이 궁금하다면 [흐름도](https://docs.tosspayments.com/common/webhook#payment_status_changed)를 살펴보세요.",
+            "enum": [
+              "READY",
+              "IN_PROGRESS",
+              "WAITING_FOR_DEPOSIT",
+              "DONE",
+              "CANCELED",
+              "PARTIAL_CANCELED",
+              "ABORTED",
+              "EXPIRED"
+            ],
+            "example": "DONE"
+          },
+          "transactionAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "거래가 처리된 시점의 날짜와 시간 정보입니다. ISO 8601 형식입니다.",
+            "example": "2022-01-01T00:00:00+09:00"
+          },
+          "currency": {
+            "type": "string",
+            "description": "결제할 때 사용한 통화입니다."
+          },
+          "amount": {
+            "type": "number",
+            "description": "결제한 금액입니다."
+          }
+        },
+        "required": [
+          "mId",
+          "transactionKey",
+          "paymentKey",
+          "orderId",
+          "method",
+          "customerKey",
+          "useEscrow",
+          "receiptUrl",
+          "status",
+          "transactionAt",
+          "currency",
+          "amount"
+        ]
       },
       "Failure": {
         "type": "object",
