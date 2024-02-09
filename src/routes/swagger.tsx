@@ -9,7 +9,7 @@ export default function Swagger() {
     presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
     plugins: [SwaggerUIBundle.plugins.DownloadUrl],
     layout: 'StandaloneLayout',
-    configUrl: 'swagger-config.yaml',
+    configUrl: '/tosspayments-api-spec/swagger-config.yaml',
   })
 
   return <div id="swagger-ui"></div>

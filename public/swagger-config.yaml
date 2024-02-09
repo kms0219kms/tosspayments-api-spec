@@ -1,4 +1,4 @@
-configUrl: '/swagger-config.yaml'
+configUrl: '/tosspayments-api-spec/swagger-config.yaml'
 
 docExpansion: none
 tagsSorter: alpha

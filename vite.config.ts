@@ -7,7 +7,34 @@ import { createHtmlPlugin } from 'vite-plugin-html'
 // https://vitejs.dev/config/
 export default defineConfig({
   base: '/tosspayments-api-spec',
-  plugins: [react(), tsconfigPaths(), createHtmlPlugin({ minify: true })],
+  plugins: [
+    react(),
+    tsconfigPaths(),
+    createHtmlPlugin({
+      minify: {
+        minifyJS: true,
+        minifyCSS: true,
+        removeComments: true,
+        useShortDoctype: true,
+        keepClosingSlash: true,
+        collapseWhitespace: true,
+        noNewlinesBeforeTagClose: true,
+        removeRedundantAttributes: true,
+        removeScriptTypeAttributes: true,
+        removeStyleLinkTypeAttributes: true,
+      },
+      pages: [
+        {
+          filename: 'index.html',
+          template: 'index.html',
+        },
+        {
+          filename: '404.html',
+          template: 'public/404.html',
+        },
+      ],
+    }),
+  ],
 
   build: {
     rollupOptions: {

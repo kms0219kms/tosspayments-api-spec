@@ -13,7 +13,7 @@ export default function Redocly() {
 
   const { error, data } = useQuery({
     queryKey: ['spec'],
-    queryFn: () => fetch('swagger-config.yaml').then(async res => YAML.parse(await res.text())),
+    queryFn: () => fetch('/tosspayments-api-spec/swagger-config.yaml').then(async res => YAML.parse(await res.text())),
   })
 
   useEffect(() => {

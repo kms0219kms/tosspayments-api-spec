@@ -23,6 +23,7 @@ body * {
 }
 
 code,
+code *,
 .redoc-wrap .redoc-json *,
 .redoc-wrap .property-name,
 .swagger-ui .opblock-summary-path * {
