@@ -732,6 +732,148 @@
             "basicAuth": []
           }
         ]
+      },
+      "get": {
+        "tags": ["현금영수증"],
+        "summary": "(2022-07-27~) 현금영수증 조회",
+        "description": "특정 기간 동안 발급된 현금영수증을 조회합니다.",
+        "operationId": "getCachReceipt",
+        "parameters": [
+          {
+            "name": "requestDate",
+            "in": "query",
+            "description": "현금영수증 발급이 요청된 날짜로 조회하고 싶을 때 사용합니다. ISO 8601 형식입니다.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "특정 현금영수증 발급 건 이후의 기록을 조회할 때 사용합니다. 이전 조회에서 돌아온 `lastCursor` 값을 전달합니다. 많은 양의 기록을 페이지 단위로 나누어 처리할 때 사용할 수 있습니다.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "한 번에 응답받을 기록의 개수입니다. 기본값은 `100`이고 설정할 수 있는 최대값은 `10000`입니다.",
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "maximum": 10000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "현금영수증 조회에 성공했다면 `hasNext`, `lastCursor`, `data` 값을 포함한 객체가 내려갑니다.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "hasNext": {
+                      "type": "boolean",
+                      "description": "다음 기록을 조회할 수 있는지 여부입니다. 이 값이 `false`면 더 조회할 기록이 없습니다."
+                    },
+                    "lastCursor": {
+                      "type": "integer",
+                      "description": "특정 현금영수증 건 이후의 기록을 조회할 때 사용합니다. 다음 기록을 조회할 때 `cursor` 파라미터에 이 값을 사용합니다."
+                    },
+                    "data": {
+                      "type": "array",
+                      "description": "조회 요청에서 `cursor`로 특정한 현금영수증 건 이후의 기록입니다. CashReceipt 객체가 담긴 배열이 돌아옵니다.",
+                      "items": {
+                        "$ref": "#/components/schemas/CashReceipt"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "현금영수증 조회에 실패했다면 HTTP 상태 코드와 함께 에러 객체가 돌아옵니다.\n\n[현금영수증 조회 API에서 발생할 수 있는 에러](https://docs.tosspayments.com/reference/error-codes#%EA%B2%B0%EC%A0%9C-%EC%8A%B9%EC%9D%B8)를 살펴보세요.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Failure"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/cash-receipts/{receiptKey}/cancel": {
+      "post": {
+        "tags": ["현금영수증"],
+        "summary": "현금영수증 발급 취소 요청",
+        "description": "receiptKey를 이용해서 현금영수증 발급을 취소합니다.\n\n요청할 때 amount 값을 따로 보내지 않으면 전액 취소됩니다.",
+        "operationId": "cancelCachReceipts",
+        "parameters": [
+          {
+            "name": "receiptKey",
+            "in": "path",
+            "description": "현금영수증의 키 값입니다.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "amount": {
+                    "type": "integer",
+                    "description": "현금영수증 발급을 취소할 금액입니다. 값이 따로 없으면 전액 취소됩니다."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "현금영수증 발급 취소 요청에 성공했다면 CashReceipt 객체가 돌아옵니다.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashReceipt"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "현금영수증 발급 취소 요청에 실패했다면 HTTP 상태 코드와 함께 에러 객체가 돌아옵니다.\n\n[현금영수증 발급 취소 요청 API에서 발생할 수 있는 에러](https://docs.tosspayments.com/reference/error-codes#%EA%B2%B0%EC%A0%9C-%EC%8A%B9%EC%9D%B8)를 살펴보세요.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Failure"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ]
       }
     }
   },
